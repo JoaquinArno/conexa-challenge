@@ -29,6 +29,8 @@ export class AuthService {
 
   async signup(createAuthDto: CreateUserDto): Promise<Auth> {
     try {
+      this.logger.log(`Signup attempt for email: ${createAuthDto.email}`);
+
       const { email, password } = createAuthDto;
 
       const existingUser = await this.userRepository.findOne({
@@ -36,16 +38,26 @@ export class AuthService {
       });
 
       if (existingUser) {
+        this.logger.warn(
+          `Signup warning: User with email ${email} already exists`
+        );
+
         const existingAuth = await this.authRepository.findOne({
           where: { userId: existingUser },
         });
 
         if (existingAuth) {
+          this.logger.warn(
+            `Signup conflict: Auth record already exists for user ${email}`
+          );
           throw new ConflictException(
             'Authentication record already exists for this user'
           );
         }
 
+        this.logger.warn(
+          `Signup conflict: User already exists without authentication for ${email}`
+        );
         throw new ConflictException(
           'User already exists without authentication'
         );
@@ -61,7 +73,11 @@ export class AuthService {
         password: hashedPassword,
       });
 
-      return await this.authRepository.save(auth);
+      const savedAuth = await this.authRepository.save(auth);
+
+      this.logger.log(`User signed up successfully with ID: ${user.id}`);
+
+      return savedAuth;
     } catch (error) {
       this.logger.error('Error signing up user:', error);
       throw new InternalServerErrorException('Error signing up user');
@@ -72,6 +88,8 @@ export class AuthService {
     const { email, password } = signInDto;
 
     try {
+      this.logger.log(`Signin attempt for email: ${email}`);
+
       const user = await this.userService.findOneByEmail(email);
 
       const auth = await this.authRepository.findOne({
@@ -80,6 +98,9 @@ export class AuthService {
       });
 
       if (!auth) {
+        this.logger.warn(
+          `Signin failed: No auth record found for user ${email}`
+        );
         throw new UnauthorizedException('Invalid credentials');
       }
 
@@ -87,10 +108,14 @@ export class AuthService {
       const hashedPassword = await createSaltAndHash(password, salt);
 
       if (hashedPassword !== auth.password) {
+        this.logger.warn(`Signin failed: Invalid password for user ${email}`);
         throw new UnauthorizedException('Invalid credentials');
       }
 
       const token = createToken({ id: auth.userId.id, role: auth.userId.role });
+
+      this.logger.log(`User ${email} signed in successfully`);
+
       return token;
     } catch (error) {
       this.logger.error('Error during user sign in:', error);
@@ -102,14 +127,21 @@ export class AuthService {
 
   async refreshToken(token: string): Promise<string> {
     try {
+      this.logger.log('Refreshing token');
+
       const payload = verifyToken(token);
 
       if (!payload) {
+        this.logger.warn('Refresh token failed: Invalid token');
         throw new UnauthorizedException('Invalid token');
       }
 
       const { id, role } = payload;
-      return createToken({ id, role });
+      const newToken = createToken({ id, role });
+
+      this.logger.log('Token refreshed successfully');
+
+      return newToken;
     } catch (error) {
       this.logger.error('Error refreshing token:', error);
       throw new UnauthorizedException('Invalid token');
