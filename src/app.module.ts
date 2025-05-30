@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
-import { ConstantsService } from './components/constants/constants.service';
 import { ConstantsModule } from './components/constants/constants.module';
+import { ConstantsService } from './components/constants/constants.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './components/auth/auth.module';
 import { UserModule } from './components/user/user.module';
-import { UserController } from './components/user/user.controller';
+import { MovieModule } from './components/movie/movie.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    ConstantsModule,
     TypeOrmModule.forRootAsync({
       imports: [ConstantsModule],
       inject: [ConstantsService],
@@ -20,9 +21,7 @@ import { UserController } from './components/user/user.controller';
     ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
+    MovieModule,
   ],
-  providers: [ConstantsService],
-  exports: [ConstantsService],
-  controllers: [UserController],
 })
 export class AppModule {}

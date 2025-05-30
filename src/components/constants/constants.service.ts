@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
+export const LOGGER_SERVICE = Symbol.for('LoggerService');
+
 @Injectable()
 export class ConstantsService {
   constructor(private readonly configService: ConfigService) {}
