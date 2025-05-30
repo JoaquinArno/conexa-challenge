@@ -9,7 +9,7 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional({
     description: 'Role of the user',
@@ -18,7 +18,7 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsEnum(Role)
-  role: Role;
+  role?: Role;
 
   @ApiPropertyOptional({
     description: 'User password',
@@ -26,5 +26,5 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @IsString()
-  password: string;
+  password?: string;
 }
